@@ -1,13 +1,9 @@
-# weboffice-infra3d
-Integration of infra3D into WebOffice
+# infra3D Add-on for WebOffice 
 
-##Installation
-Das Tool muss auf demselbem Server wie WebOffice bereitgestellt werden. Entweder im /pub Verzeichnis von WebOffice oder auf IIS als virtuelles Verzeichnis, z.B. /webofficeinfra3d.
+##Setup infra3D Add-on
 
-In WebOffice erfolgt die Konfiguration als Externes Gui Modul im Abschnitt Projektkonfiguration.
+1. Download all files from this repository.
+2. Put them on the same server like your WebOffice entity. The infra3D add-on has to be in the same directory like WebOffice or on ISS in a virtual directory e.g. /webofficeinfra3d.
+3. Create a generic tool of type static in your WebOffice project. The tool should be hidden.
 
-* Aufzurufende URL: https://server.com/webofficeinfra3d/tool1_form.htm
-* Modus http GET
-* Anzeigemodus: IFrame-Floating
-
-Getestet mit WebOffice 10.4 und 10.5
+The infra3D add-on is tested with WebOffice versions 10.4 and 10.5.

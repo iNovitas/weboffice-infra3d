@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<!--
+/*******************************************************************************
+Project       : API-Anbindung WebOffice
+Purpose       : Version 1
+Creation Date : 04.05.2017
+Company       : iNovitas AG
+Author        : Manuel Daetwyler
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+*******************************************************************************/
+-->
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1;IE=9;IE=10;IE=11">
+	<link rel="stylesheet" type="text/css" href="css_main.css">
+	<script type="text/javascript" src="infra3dapi.js"></script>
+	<script type="text/javascript" src="proj4.js"></script>
+
+	<script type="text/javascript">
+
+		var nodeCar = null;
+		var nodePointPicked = null;
+		var woAPI = null;
+		var mapsrid = 21781;
+		var infra3dsrid = 2056;
+		var coordElement = null;
+		var pointPickedImagePath = "../pub/iNovitas/pin.png";
+		var nodeCarImagePath = "../pub/iNovitas/geolocation_100.png";
+		var webOfficeWindow = null;
+		var webOfficeClient = null;
+
+
+		proj4.defs('EPSG:31256',"+proj=tmerc +lat_0=0 +lon_0=16.33333333333333 +k=1 +x_0=0 +y_0=-5000000 +ellps=bessel +towgs84=577.326,90.129,463.919,5.137,1.474,5.297,2.4232 +units=m +no_defs");
+		proj4.defs('EPSG:3857',"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs");
+		proj4.defs('EPSG:2056',"+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs");
+		proj4.defs('EPSG:21781', "+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=600000 +y_0=200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs");
+
+		function setWebOfficeInfo() {
+			if(opener && opener.client) {
+				//popup
+				webOfficeWindow = opener;
+				webOfficeClient = opener.client;
+			} else if(opener && opener.parent.client) {
+				//static custom tool hidden (infra3dStart.htm)
+				webOfficeWindow = opener.parent;
+				webOfficeClient = opener.parent.client;
+			} else if(parent.client) {
+				//integrated iframe
+				webOfficeWindow = parent;
+				webOfficeClient = parent.client;
+			}
+			if(webOfficeClient) {
+				init();
+			}
+		}
+
+		//----------------------------------------------------
+		function init()
+		{
+			initWebOfficeScriptApi();
+			coordElement = document.getElementById("coordinates");
+			initInfra3D();
+		}
+
+		//----------------------------------------------------
+		function initInfra3D()
+		{
+			if(webOfficeClient.mainMap && webOfficeClient.mainMap.getCenterAndScale()) {
+				var currentMapCenter = webOfficeClient.mainMap.getCenterAndScale();
+				var startCoordinates = transformMapToInfra3D(currentMapCenter.x, currentMapCenter.y);
+				infra3d.init(
+					"weboffice_module_infra3d",
+					"https://www.infra3d.ch/client-v3/live",
+					{
+						"lang" : "de",
+						"map" : false,
+						"layer" : false,
+						"navigation" : false,
+						"buttons": true,
+						"easting": startCoordinates[0],
+						"northing": startCoordinates[1],
+						"epsg": infra3dsrid
+					},
+					function(){
+						setOnPositionChanged();
+//						getEnn();
+						createCamPosTag();
+						createPointPickedTag();
+					},
+					null);
+			}
+			else {
+				window.setTimeout(initInfra3D, 500);
+			}
+		}
+
+		//----------------------------------------------------
+		function initWebOfficeScriptApi()
+		{
+			woAPI = webOfficeClient.api;
+			mapsrid = webOfficeClient.environment.getInit().WEBGIS_PROJECTCONFIG.DISPLAY.coordinate_system_wkid;
+		}
+
+		//----------------------------------------------------
+		function transformInfra3DToMap(x, y)
+		{
+			if( x != null && y != null ){
+				var mc = proj4('EPSG:' + infra3dsrid.toString(), 'EPSG:' + mapsrid.toString()).forward([x, y]);
+			}
+			return mc
+		}
+
+		//----------------------------------------------------
+		function transformMapToInfra3D(x, y)
+		{
+			if( x != null && y != null ){
+				var ic = proj4('EPSG:' + infra3dsrid.toString(), 'EPSG:' + mapsrid.toString()).inverse([x, y])
+			}
+			return ic
+		}
+
+		//----------------------------------------------------
+		/*function getEnn()
+		{
+			infra3d.getEnn(mapsrid,function(enn)
+			{
+
+			},null,null);
+		}*/
+
+		//----------------------------------------------------
+		function loadAtPosition(geom)
+		{
+			infra3d.loadAtPosition(geom[0][0],geom[0][1],{
+				"enn" : 1,
+				"epsg": infra3dsrid
+			});
+		}
+
+		//----------------------------------------------------
+		function lookAt2DPosition(geom)
+		{
+			infra3d.lookAt2DPosition(geom[0][0],geom[0][1]);
+		}
+
+		//----------------------------------------------------
+		function setOnPositionChanged()
+		{
+			infra3d.setOnPositionChanged(onPositionChanged, null);
+		}
+
+		//----------------------------------------------------
+		function onPositionChanged(easting, northing, height, epsg, orientation, framenumber, cameraname, cameratype, date, address, campaign)
+		{
+			var mapCoords = transformInfra3DToMap(parseFloat(easting), parseFloat(northing));
+			var e = mapCoords[0].toFixed(2);
+			var n = mapCoords[1].toFixed(2);
+			nodeCar.setPosition(e, n);
+			updateCamPosTag(orientation);
+			updateMapExtent(e, n);
+		}
+
+		//----------------------------------------------------
+		function createCamPosTag()
+		{
+			nodeCar = woAPI.addGeoNode();
+			var divNC = nodeCar.getContainer();
+			var gl = document.createElement("img");
+			gl.setAttribute("id", "carimage");
+			gl.src = nodeCarImagePath;
+			divNC.appendChild(gl);
+		}
+
+		//----------------------------------------------------
+		function updateCamPosTag(ori)
+		{
+			var divNC = nodeCar.getContainer();
+			var offsetx = divNC.firstChild.width * -0.5;
+			var offsety = divNC.firstChild.height * -0.5;
+			divNC.style.transform = "translate(" + offsetx + "px," + offsety + "px) rotate(" + ori + "deg) scale(0.5,0.5)";
+		}
+
+		//----------------------------------------------------
+		function getPointFromMap(checkbox)
+		{
+			if (checkbox.checked){
+				if (checkbox.value === 'goToPos'){
+					document.getElementById('lookAtPos').checked = false;
+				}
+				if (checkbox.value ==='lookAtPos'){
+					document.getElementById('goToPos').checked = false;
+				}
+				webOfficeClient.eventBroker.subscribe(this, 'mousedown', webOfficeClient.mainMap, handleMouseDownMap);
+			}
+			else{
+				webOfficeClient.eventBroker.unsubscribe(this, 'mousedown', webOfficeClient.mainMap);
+			}
+		}
+
+		//----------------------------------------------------
+		function handleMouseDownMap(event)
+		{
+			var clickP = webOfficeClient.mainMap.toGEO(event);
+			var infra3DCoords = transformMapToInfra3D(clickP.x, clickP.y);
+			var geom = [[infra3DCoords[0],infra3DCoords[1]]];
+
+			if (document.getElementById('goToPos').checked){
+				loadAtPosition(geom);
+			}
+			if (document.getElementById('lookAtPos').checked){
+				lookAt2DPosition(geom);
+			}
+		}
+
+		//----------------------------------------------------
+		function goToMapCenter()
+		{
+			var mInfo = woAPI.getMapInfo();
+			var infra3DCoords = transformMapToInfra3D(mInfo.centerAndScale.x, mInfo.centerAndScale.y);
+			var geom = [[infra3DCoords[0],infra3DCoords[1]]];
+
+			loadAtPosition(geom);
+		}
+
+		//----------------------------------------------------
+		function setOnPointPicked(checkbox)
+		{
+			if (checkbox.checked){
+				infra3d.setOnPointPicked(onPointPicked,null);
+			}
+			else{
+				nodePointPicked.getContainer().style.display = "none";
+				infra3d.unsetOnPointPicked();
+				coordElement.innerHTML = "";
+			}
+		}
+
+		//----------------------------------------------------
+		function onPointPicked(easting, northing, height, epsg)
+		{
+			var mapCoords = transformInfra3DToMap(parseFloat(easting), parseFloat(northing));
+			nodePointPicked.getContainer().style.display = "";
+			updatePointPickedTag(mapCoords[0], mapCoords[1], height, epsg);
+		}
+
+		//----------------------------------------------------
+		function createPointPickedTag(e,n,h,epsg)
+		{
+			nodePointPicked = woAPI.addGeoNode();
+			var nodePointPickedDiv = nodePointPicked.getContainer();
+			var pointpickedimg = document.createElement("img");
+			pointpickedimg.setAttribute("id", "pointpickedimage");
+			pointpickedimg.src = pointPickedImagePath;
+			nodePointPickedDiv.appendChild(pointpickedimg);
+			nodePointPickedDiv.style.display = "none";
+		}
+
+		//----------------------------------------------------
+		function updatePointPickedTag(e, n, h, epsg)
+		{
+			nodePointPicked.setPosition(e.toFixed(2), n.toFixed(2));
+			var nodePointPickedDiv = nodePointPicked.getContainer();
+			if (nodePointPickedDiv.hasChildNodes()) {
+				var offsetx = nodePointPickedDiv.firstChild.width * -0.5;
+				var offsety = nodePointPickedDiv.firstChild.height * -0.75;
+				nodePointPickedDiv.style.transform = "translate(" + offsetx + "px," + offsety + "px) scale(0.5,0.5)";
+			}
+
+			createCoordString([[e, n, h]]);
+		}
+
+		//----------------------------------------------------
+		function createCoordString(geom)
+		{
+			if (geom[0].length==3) {
+				coordElement.innerHTML = String(geom[0][0].toFixed(2)) + ", " + String(geom[0][1].toFixed(2)) + ", " + String(geom[0][2].toFixed(2));
+			}
+			else{
+				coordElement.innerHTML = String(geom[0][0].toFixed(2)) + ", " + String(geom[0][1].toFixed(2));
+			}
+		}
+
+		//----------------------------------------------------
+		function updateMapExtent(easting, northing)
+		{
+			var eastingFloat = parseFloat(easting);
+			var northingFloat = parseFloat(northing);
+			var mapCenter = transformInfra3DToMap(easting, northing);
+			var visibleMap = {xMin: 0, xMax: 0, yMin: 0, yMax: 0};
+			var margin = 10;
+			var vmCornerTopLeftPxl = {};
+			var vmCornerBottomRightPxl = {};
+			var vmCenterPxl = {};
+			var vmCenterCoo = {};
+
+			var mInfo = woAPI.mapInfo();
+			var width = mInfo.envelope.xMax - mInfo.envelope.xMin;
+			var height = mInfo.envelope.yMax - mInfo.envelope.yMin;
+
+			var visibleTopLeft = webOfficeClient.mainMap.toGEO({clientX: mInfo.left, clientY: mInfo.top});
+			var visibleBottomRight = webOfficeClient.mainMap.toGEO({clientX: mInfo.fullwidth - mInfo.right, clientY: mInfo.fullheight - mInfo.bottom});
+
+			visibleMap.xMin = visibleTopLeft.x;
+			visibleMap.xMax = visibleBottomRight.x;
+			visibleMap.yMin = visibleBottomRight.y;
+			visibleMap.yMax = visibleTopLeft.y;
+
+			if (mapCenter[0] < visibleMap.xMin || mapCenter[0] > visibleMap.xMax || mapCenter[1] < visibleMap.yMin || mapCenter[1] > visibleMap.yMax){
+				woAPI.mapByCenterAndScale(mapCenter[0], mapCenter[1]);
+			}
+		}
+
+		//----------------------------------------------------
+		function removeWOTags()
+		{
+			infra3d.unsetOnPointPicked();
+			infra3d.unsetOnPositionChanged();
+
+			nodeCar.destroy();
+			nodePointPicked.destroy();
+
+			var woTags = webOfficeWindow.document.getElementsByClassName("external-geonode");
+			while (woTags.length > 0)
+			{
+				woTags[0].remove();
+			}
+		}
+
+	</script>
+</head>
+<body onload="setWebOfficeInfo()" onunload="removeWOTags()">
+<div id="buttonsdiv">
+	<table>
+		<tr>
+			<th>
+				<a id="divGTP" title="Gehe zu
+--------------------------
+Klicken Sie ins Kartenfenster
+infra3D springt zum nächstgelegenen Bild">
+					<input type="checkbox" id="goToPos" value="goToPos" onclick="getPointFromMap(this)">
+					<label for="goToPos"></label>
+				</a>
+			</th>
+			<th>
+				<a id="divLAP" title="Zeig mir
+--------------------------
+Klicken Sie ins Kartenfenster
+infra3D springt zum Bild, das in Richtung der angeklickten Koordinate blickt">
+					<input type="checkbox" id="lookAtPos" value="lookAtPos" onclick="getPointFromMap(this)">
+					<label for="lookAtPos"></label>
+				</a>
+			</th>
+			<th>
+				<a id="Infra3DToWO" title="Pin
+--------------------------
+Klicken Sie ins infra3D-Bild
+Im Kartenfenster wird angeklickte Koordinate mit Pin angezeigt">
+					<input type="checkbox" id="pickInfra3D" onclick="setOnPointPicked(this)">
+					<label for="pickInfra3D"></label>
+				</a>
+			</th>
+			<th>
+				<a id="divCOO">
+					<p id="coordinates"></p>
+				</a>
+			</th>
+		</tr>
+	</table>
+</div>
+<div id="weboffice_module_infra3d"></div>
+</body>
+</html>
