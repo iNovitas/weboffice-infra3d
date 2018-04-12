@@ -1,0 +1,141 @@
+<!--
+/*******************************************************************************
+Project       : API-Anbindung WebOffice
+Purpose       : Version 1
+Creation Date : 04.05.2017
+Company       : iNovitas AG
+Author        : Manuel Daetwyler
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+*******************************************************************************/
+-->
+
+/*--- BROWSER RESET --------------------------------------------------------------------------------------------------*/
+* {
+   margin: 0;
+   padding: 0;
+}
+
+
+/*--- MAIN STYLES ----------------------------------------------------------------------------------------------------*/
+body {
+   font: 50% "Trebuchet MS",sans-serif;
+   position : absolute;
+   width : 100%;
+   height : 100%;
+   /*margin: 50px;*/
+   margin:0;
+   background-color: #e6e6e6;
+   overflow:hidden;
+}
+
+#buttonsdiv {
+   height: 48px;
+}
+
+#weboffice_module_infra3d {
+   position: absolute;
+   background-color: #e6e6e6;
+   overflow: hidden;
+   border: none;
+   width : 100%;
+   height : calc(100% - 48px);
+}
+
+#pickInfra3D {
+   display: none;
+}
+
+#pickInfra3D + label {
+   display: block;
+   margin: 5px;
+   cursor: pointer;
+   background: url("resources/pin.png") no-repeat;
+   background-size: 25px;
+   background-position: center;
+   border-radius:4px;
+   border:2px solid #afafaf;
+   height: 32px;
+   width: 32px;
+   font-size: 16px;
+   text-align:center;
+}
+
+#pickInfra3D:checked + label{
+   background-color: #afafaf;
+   border-radius:4px;
+   border:2px solid #282828;
+}
+
+#goToPos {
+   display: none;
+}
+
+#goToPos + label {
+   display: block;
+   margin: 5px;
+   cursor: pointer;
+   background: url("resources/target.png") no-repeat;
+   background-size: 25px;
+   background-position: center;
+   border-radius:4px;
+   border:2px solid #afafaf;
+   height: 32px;
+   width: 32px;
+   font-size: 16px;
+   text-align:center;
+}
+
+#goToPos:checked + label{
+   background-color: #afafaf;
+   border-radius:4px;
+   border:2px solid #282828;
+}
+
+#lookAtPos {
+   display: none;
+}
+
+#lookAtPos + label {
+   display: block;
+   margin: 5px;
+   cursor: pointer;
+   background: url("resources/spyglass.png") no-repeat;
+   background-size: 25px;
+   background-position: center;
+   border-radius:4px;
+   border:2px solid #afafaf;
+   height: 32px;
+   width: 32px;
+   font-size: 16px;
+   text-align:center;
+}
+
+#lookAtPos:checked + label {
+   background-color: #afafaf;
+   border-radius:4px;
+   border:2px solid #282828;
+}
+
+#coordinates {
+   margin-left: 5px;
+   margin-right: 5px;
+   margin-top: 7px;
+   font-size: 16px;
+   font-weight: bold;
+   text-align: center;
+}
+
+#divCOO {
+   display: block;
+   margin: 5px;
+   cursor: pointer;
+   border-radius:4px;
+   border:2px solid #afafaf;
+   height: 32px;
+   width: auto;
+   min-width: 200px;
+}
