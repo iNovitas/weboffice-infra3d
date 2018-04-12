@@ -18,19 +18,19 @@ the Free Software Foundation; either version 3 of the License, or
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="chrome=1;IE=9;IE=10;IE=11">
 	<link rel="stylesheet" type="text/css" href="css_main.css">
-	<script type="text/javascript" src="infra3dapi.js"></script>
-	<script type="text/javascript" src="proj4.js"></script>
+	<script type="text/javascript" src="https://www.infra3d.ch/client/api/js/infra3dapi.js"></script>
+	<script type="text/javascript" src="externals/proj4.js"></script>
 
 	<script type="text/javascript">
 
 		var nodeCar = null;
 		var nodePointPicked = null;
 		var woAPI = null;
-		var mapsrid = 21781;
+		var mapsrid = 2056;
 		var infra3dsrid = 2056;
 		var coordElement = null;
-		var pointPickedImagePath = "../pub/iNovitas/pin.png";
-		var nodeCarImagePath = "../pub/iNovitas/geolocation_100.png";
+		var pointPickedImagePath = "../../webapps/inovitas/resources/pin.png";
+		var nodeCarImagePath = "../../webapps/inovitas/resources/geolocation_100.png";
 		var webOfficeWindow = null;
 		var webOfficeClient = null;
 
@@ -40,6 +40,7 @@ the Free Software Foundation; either version 3 of the License, or
 		proj4.defs('EPSG:2056',"+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs");
 		proj4.defs('EPSG:21781', "+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=600000 +y_0=200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs");
 
+		//----------------------------------------------------
 		function setWebOfficeInfo() {
 			if(opener && opener.client) {
 				//popup
