@@ -18,7 +18,7 @@ the Free Software Foundation; either version 3 of the License, or
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="chrome=1;IE=9;IE=10;IE=11">
 	<link rel="stylesheet" type="text/css" href="css_main.css">
-	<script type="text/javascript" src="https://www.infra3d.ch/client/api/js/infra3dapi.js"></script>
+	<script type="text/javascript" src="https://www.infra3d.ch/api/js/infra3dapi.js"></script>
 	<script type="text/javascript" src="externals/proj4.js"></script>
 
 	<script type="text/javascript">
@@ -29,8 +29,8 @@ the Free Software Foundation; either version 3 of the License, or
 		var mapsrid = 2056;
 		var infra3dsrid = 2056;
 		var coordElement = null;
-		var pointPickedImagePath = "../../webapps/inovitas/resources/pin.png";
-		var nodeCarImagePath = "../../webapps/inovitas/resources/geolocation_100.png";
+		var pointPickedImagePath = "../pub/inovitas/resources/pin.png";
+		var nodeCarImagePath = "../pub/inovitas/resources/geolocation_100.png";
 		var webOfficeWindow = null;
 		var webOfficeClient = null;
 
@@ -76,12 +76,12 @@ the Free Software Foundation; either version 3 of the License, or
 				var startCoordinates = transformMapToInfra3D(currentMapCenter.x, currentMapCenter.y);
 				infra3d.init(
 					"weboffice_module_infra3d",
-					"https://www.infra3d.ch/client-v3/live",
+					"https://client-v3.infra3d.ch/",
 					{
 						"lang" : "de",
 						"map" : false,
 						"layer" : false,
-						"navigation" : false,
+						"navigation" : true,
 						"buttons": true,
 						"easting": startCoordinates[0],
 						"northing": startCoordinates[1],
@@ -169,12 +169,14 @@ the Free Software Foundation; either version 3 of the License, or
 		//----------------------------------------------------
 		function createCamPosTag()
 		{
-			nodeCar = woAPI.addGeoNode();
-			var divNC = nodeCar.getContainer();
-			var gl = document.createElement("img");
-			gl.setAttribute("id", "carimage");
-			gl.src = nodeCarImagePath;
-			divNC.appendChild(gl);
+			if(null == nodeCar) {
+				nodeCar = woAPI.addGeoNode();
+				var divNC = nodeCar.getContainer();
+				var gl = webOfficeWindow.document.createElement("img");
+				gl.setAttribute("id", "carimage");
+				gl.src = nodeCarImagePath;
+				divNC.appendChild(gl);
+			}
 		}
 
 		//----------------------------------------------------
@@ -252,13 +254,15 @@ the Free Software Foundation; either version 3 of the License, or
 		//----------------------------------------------------
 		function createPointPickedTag(e,n,h,epsg)
 		{
-			nodePointPicked = woAPI.addGeoNode();
-			var nodePointPickedDiv = nodePointPicked.getContainer();
-			var pointpickedimg = document.createElement("img");
-			pointpickedimg.setAttribute("id", "pointpickedimage");
-			pointpickedimg.src = pointPickedImagePath;
-			nodePointPickedDiv.appendChild(pointpickedimg);
-			nodePointPickedDiv.style.display = "none";
+			if (null == nodePointPicked) {
+				nodePointPicked = woAPI.addGeoNode();
+				var nodePointPickedDiv = nodePointPicked.getContainer();
+				var pointpickedimg = webOfficeWindow.document.createElement("img");
+				pointpickedimg.setAttribute("id", "pointpickedimage");
+				pointpickedimg.src = pointPickedImagePath;
+				nodePointPickedDiv.appendChild(pointpickedimg);
+				nodePointPickedDiv.style.display = "none";
+			}
 		}
 
 		//----------------------------------------------------
@@ -291,7 +295,6 @@ the Free Software Foundation; either version 3 of the License, or
 		{
 			var eastingFloat = parseFloat(easting);
 			var northingFloat = parseFloat(northing);
-			var mapCenter = transformInfra3DToMap(easting, northing);
 			var visibleMap = {xMin: 0, xMax: 0, yMin: 0, yMax: 0};
 			var margin = 10;
 			var vmCornerTopLeftPxl = {};
@@ -311,8 +314,8 @@ the Free Software Foundation; either version 3 of the License, or
 			visibleMap.yMin = visibleBottomRight.y;
 			visibleMap.yMax = visibleTopLeft.y;
 
-			if (mapCenter[0] < visibleMap.xMin || mapCenter[0] > visibleMap.xMax || mapCenter[1] < visibleMap.yMin || mapCenter[1] > visibleMap.yMax){
-				woAPI.mapByCenterAndScale(mapCenter[0], mapCenter[1]);
+			if (eastingFloat < visibleMap.xMin || eastingFloat > visibleMap.xMax || northingFloat < visibleMap.yMin || northingFloat > visibleMap.yMax){
+				woAPI.mapByCenterAndScale(eastingFloat, northingFloat);
 			}
 		}
 
