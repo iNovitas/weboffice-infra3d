@@ -199,10 +199,10 @@ the Free Software Foundation; either version 3 of the License, or
 				if (checkbox.value ==='lookAtPos'){
 					document.getElementById('goToPos').checked = false;
 				}
-				webOfficeClient.eventBroker.subscribe(this, 'mousedown', webOfficeClient.mainMap, handleMouseDownMap);
+				webOfficeClient.eventBroker.subscribe(this, 'pointer-down', webOfficeClient.mainMap, handleMouseDownMap);
 			}
 			else{
-				webOfficeClient.eventBroker.unsubscribe(this, 'mousedown', webOfficeClient.mainMap);
+				webOfficeClient.eventBroker.unsubscribe(this, 'pointer-down', webOfficeClient.mainMap);
 			}
 		}
 
