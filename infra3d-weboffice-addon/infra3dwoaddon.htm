@@ -83,7 +83,8 @@ the Free Software Foundation; either version 3 of the License, or
 						"map" : false,
 						"layer" : false,
 						"navigation" : true,
-						"buttons": true,
+						"buttons": ["map", "layer", "navigation"],
+						"forcelayerreset": true,
 						"easting": startCoordinates[0],
 						"northing": startCoordinates[1],
 						"epsg": infra3dsrid
@@ -194,10 +195,16 @@ the Free Software Foundation; either version 3 of the License, or
 		{
 			if (checkbox.checked){
 				if (checkbox.value === 'goToPos'){
-					document.getElementById('lookAtPos').checked = false;
+					if (document.getElementById('lookAtPos').checked){
+						webOfficeClient.eventBroker.unsubscribe(this, 'pointer-down', webOfficeClient.mainMap);
+						document.getElementById('lookAtPos').checked = false;
+					}
 				}
 				if (checkbox.value ==='lookAtPos'){
-					document.getElementById('goToPos').checked = false;
+					if (document.getElementById('goToPos').checked){
+						webOfficeClient.eventBroker.unsubscribe(this, 'pointer-down', webOfficeClient.mainMap);
+						document.getElementById('goToPos').checked = false;		
+					}
 				}
 				//webOfficeClient.eventBroker.subscribe(this, 'mousedown', webOfficeClient.mainMap, handleMouseDownMap);
 				webOfficeClient.eventBroker.subscribe(this, 'pointer-down', webOfficeClient.mainMap, handleMouseDownMap);
